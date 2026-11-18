@@ -1,0 +1,521 @@
+IEEE TRANSACTIONS ON ELECTROMAGNETIC COMPATIBILITY, VOL. 48, NO. 2, MAY 2006
+
+311
+
+Inductor Winding Capacitance Cancellation
+Using Mutual Capacitance Concept for Noise
+Reduction Application
+Shuo Wang, Member, IEEE, Fred. C. Lee, Fellow, IEEE, and Jacobus Daniel van Wyk, Fellow, IEEE
+
+Abstract—In this paper, the properties of mutual capacitance
+between two capacitors are first discussed. It is found that the effects of mutual capacitance can be represented by two positive or
+negative capacitors across the two capacitors. These two equivalent capacitors can be used to cancel the parasitic capacitance of
+inductors. Because the mutual capacitance can be emulated using
+two small capacitors, the proposed method can easily be implemented in practical components. The prototypes are then built and
+the cancellation is verified using a network analyzer. Further EMI
+measurements in a practical power circuit prove that there is a
+significant improvement in the inductor’s filtering performance.
+Index Terms—Electromagnetic interference (EMI) filter,
+mutual capacitance, winding capacitance, winding capacitance
+cancellation.
+
+I. INTRODUCTION
+N inductor is a very important filter component for electromagnetic interference (EMI) noise suppresses because
+its impedance increases as frequency increases. However, the
+inductor’s operation frequency range is limited because of the
+parasitic capacitance. The turn-to-turn capacitance and turn-tocore capacitance make an inductor more like a capacitor at high
+frequencies [5]. When an inductor model is considered, the parasitic capacitance is usually lumped together as an equivalent
+parallel capacitance (EPC), which is parallel to the inductor’s inductance L. The winding loss and core loss are usually lumped
+together as an equivalent parallel resistance (EPR), which is
+parallel to the inductance L. Fig. 1 shows a simple model for
+the inductor. Fig. 2 shows the typical impedance curves for two
+practical inductors.
+In Fig. 2, the inductance determines the impedances of the
+inductors at low frequencies, and the EPC determines the
+impedances of the inductors at high frequencies. For curve
+1, the quality factor Q√is larger than one, so EPC1 and L1
+resonate at f1 = 1/(2π L1 × EPC1 ). The highest impedance
+is equal to EPR1 and it happens at f1 . For curve 2, because
+the quality factor is smaller than one, the first corner frequency is determined by EPR2 and L2 as f3 = EPR2 /2πL2 . The
+second-corner frequency is determined by EPR2 and EPC2 as
+impedance is equal
+f4 = 1/(2π × EPR2 × EPC2 ). The highest
+√
+to EPR2 and it happens at f2 = 1/(2π L2 × EPC2 ). Based on
+
+A
+
+Manuscript received November 22, 2005; revised January 10, 2006.
+The authors are with the National Science Foundation Engineering Research
+Center for Power Electronics Systems, the Bradley Department of Electrical
+and Computer Engineering, Virginia Polytechnic Institute and State University
+(Virginia Tech), Blacksburg, VA 24061 USA.
+Digital Object Identifier 10.1109/TEMC.2006.873867
+
+Fig. 1.
+
+Equivalent circuit for a practical inductor.
+
+this analysis, the highest impedance an inductor can achieve is
+EPR; however, because of EPC, the impedance is much smaller
+than EPR at high frequencies. If the EPC is zero, then the
+impedance of an inductor at high frequencies is EPR, which
+is good for noise attenuation at high frequencies.
+In power electronics systems, the conducted EMI spectrum
+ranges from the switching frequency to 30 MHz. EMI standards
+specify the frequency range and noise limit, which switching
+mode power electronics systems need to meet. EMI filters are
+needed to attenuate the noise to satisfy the EMI standards. A
+typical low-pass differential mode (DM) EMI filter for a power
+electronics application is shown in Fig. 3. There are two equal
+inductors (L1 and L2 ) on each line and two capacitors, C1 and
+C2 , across two lines. Two inductors can be coupled to save
+size and cost. At frequencies higher than the self resonant frequencies of the inductors, the inductors perform like capacitors, and therefore, the filter is no longer the expected lowpass
+filter.
+This paper introduces a method employing a mutual capacitance concept to cancel the EPC of inductors. Prototypes are
+built with the proposed method. Small signal measurements
+are first carried out to verify the proposed method. The prototypes are then used in practical power electronics circuits for
+conducted EMI measurement (with large current bias and excitation). Both the small signal and practical EMI measurement
+prove that there is a significant improvement on the inductor’s
+filtering performance.
+II. WINDING CAPACITANCE CANCELLATION USING MUTUAL
+CAPACITANCE CONCEPT
+The mutual capacitance concept has evolved from the duality
+principle in [1] to the correspondent part of the mutual inductance. The basic properties of mutual capacitance are derived
+and a physical model using a simple parallel plate capacitor is
+demonstrated in [1]. This paper will further derive the properties
+for winding capacitance cancellation.
+
+0018-9375/$20.00 © 2006 IEEE
+Authorized licensed use limited to: University of Florida. Downloaded on December 30,2020 at 05:55:47 UTC from IEEE Xplore. Restrictions apply.
+
+312
+
+IEEE TRANSACTIONS ON ELECTROMAGNETIC COMPATIBILITY, VOL. 48, NO. 2, MAY 2006
+
+Fig. 2.
+
+Impedances of two inductors.
+
+Fig. 3.
+
+Differential mode EMI Filter.
+Fig. 5. Equivalence for mutual capacitance between two capacitors. (a) Negative coupling. (b) Positive coupling.
+
+For positive coupling, the following relationship holds:
+I1 = jωC1 U1 + jωN U2
+
+(4)
+
+I2 = jωN U1 + jωC2 U2 .
+
+(5)
+
+Equations (2) and (3) can further be expressed as
+
+Fig. 4. Mutual capacitance between two parallel-plate capacitors. (a) Negative
+coupling. (b) Positive coupling.
+
+Fig. 4 shows two parallel-plate capacitors that are physically
+close to each other. Two capacitors have the same voltage reference direction, as seen in Fig. 4(a), and opposite voltage reference direction as seen in Fig. 4(b). An external voltage source is
+added to C1 . The positive charge Q11 is then built on the upper
+plate and the negative charge −Q11 is built on the lower plate.
+As a result, the negative charge −Q21 is induced on the upper
+plate of C2 , and the positive charge Q21 is induced on the lower
+plate of C2 . Due to the different voltage reference direction relationship in Fig. 4(a) and (b), the mutual capacitance N can be
+positive or negative. The mutual capacitance is defined similarly
+to the mutual inductance as
+Q21
+N=
+.
+(1)
+U1
+Considering a general case, for negative coupling, the following relationship is satisfied:
+I1 = jωC1 U1 − jωN U2
+
+(2)
+
+I2 = −jωN U1 + jωC2 U2 .
+
+(3)
+
+I1 = jω(C1 − N )U1 + jωN (U1 − U2 )
+
+(6)
+
+I2 = jωN (U2 − U1 ) + jω(C2 − N )U2
+
+(7)
+
+and (5) and (6) can be further expressed as
+I1 = jω(C1 + N )U1 − jωN (U1 − U2 )
+
+(8)
+
+I2 = −jωN (U2 − U1 ) + jω(C2 + N )U2 .
+
+(9)
+
+From (6) and (7), Fig. 4(a) can be equivalent to Fig. 5(a). From
+(8) and (9), Fig. 4(b) can be equivalent to Fig. 5(b).
+In Fig. 5(a), the negative coupling between two capacitors can
+be represented by showing two extra capacitors with a capacitance 2N across the two plates of two capacitors with the same
+polarity. At the same time, the capacitance of each capacitor
+is reduced by N . In Fig. 5(b), similarly, the positive coupling
+between two capacitors can be represented by showing two extra capacitors with a capacitance −2N across the two plates of
+two capacitors with the same polarity. The capacitance of each
+capacitor is increased by N .
+Based on this analysis, if C1 and C2 in Fig. 3 have a positive mutual capacitance N , which is equal to the half of the
+winding capacitance of the inductors, the winding capacitance
+of inductors are canceled, since −2N is in parallel with the positive winding capacitance. On the other hand, when the winding
+capacitance of L1 and L2 is negative (will be discussed later),
+
+Authorized licensed use limited to: University of Florida. Downloaded on December 30,2020 at 05:55:47 UTC from IEEE Xplore. Restrictions apply.
+
+WANG et al.: INDUCTOR WINDING CAPACITANCE CANCELLATION
+
+Fig. 6. Cancellation of winding capacitance using mutual capacitance between two capacitors. (a) Canceling negative winding capacitance −EPC.
+(b) Canceling positive winding capacitance +EPC.
+
+313
+
+Fig. 9.
+
+Measurement setup using Agilent E5070B.
+
+Fig. 10. Measurement setup using Agilent E5070B.
+Fig. 7. Using two small capacitors CE to emulate the mutual capacitance.
+(a) Emulating negative coupling. (b) Emulating positive coupling.
+
+Fig. 11. Measurement setup using Agilent E5070B.
+
+Fig. 8.
+
+Measurement setup using Agilent E5070B.
+
+then if C1 and C2 have a negative mutual capacitance N , which
+is equal to the half of the winding capacitance of the inductors,
+the winding capacitance of inductors is canceled since 2N capacitance is in parallel with the negative winding capacitance
+(Fig. 6).
+The design of mutual capacitance between two capacitors
+seems difficult for existing commercial discrete capacitors. Fortunately, the mutual capacitance can easily be emulated using
+two extra small capacitors (Fig. 7).
+In Fig. 7, two extra capacitors with the capacitance of CE
+are used to emulate the mutual capacitance CE /2 between
+capacitors with capacitance (C1 + CE )/2 and (C2 + CE )/2.
+C1 and C2 are actually not necessary for winding capacitance
+cancellation, so only two small capacitors are enough. The mutual capacitance cancellation is then easily realized by using
+two small capacitors with the same capacitance as the winding
+capacitance.
+Compared with the common practice in practical EMI filter design, by applying the proposed technique, the filter would
+
+Fig. 12. Improvement of inductor filtering performance at high frequencies
+due to the EPC cancellation.
+
+have better high-frequency performance, smaller size, and lower
+cost because the winding capacitance is canceled. For the common practice, a larger core is usually used to reduce winding
+capacitance. However, the filter size is larger and improvement
+is still limited. Another common practice is using one more
+stage EMI filter to get more attenuation at higher cost and larger
+size. In both cases, the filter is not as efficient as the filter with
+winding-capacitance cancellation.
+
+Authorized licensed use limited to: University of Florida. Downloaded on December 30,2020 at 05:55:47 UTC from IEEE Xplore. Restrictions apply.
+
+314
+
+Fig. 13.
+
+IEEE TRANSACTIONS ON ELECTROMAGNETIC COMPATIBILITY, VOL. 48, NO. 2, MAY 2006
+
+Improvement of filter performance at high frequencies due to the EPC cancellation.
+
+Fig. 14. Parasitic capacitance between two inductor windings. (a) Inductor
+structure. (b) Equivalent circuit.
+
+III. EXPERIMENTS
+Four experiments are carried out to implement and verify the
+proposed method. An Agilent E5070B, four-port balanced ENA
+RF network analyzer is used in the experiments. The frequency
+is swept from 300 kHz to 30 MHz. In the first two experiments,
+two inductors are not coupled. The SDD21 of the filter with
+only two inductors is first measured as shown in Fig. 8. The selfparasitics for two inductors are L1 = 42.34 µH, EPC1 = 10.3
+pF, EPR1 = 10.87 kΩ, L2 = 42.44 µH, EPC2 = 11.13 pF, and
+EPR2 = 10.67 kΩ. An L-type EMI filter is then built using one
+capacitor (C = 3.22 µF, ESL = 20.9 nH, ESR = 13.6 mΩ) and
+these two inductors. The SDD21 of this filter is also measured,
+as shown in Fig. 9.
+In the second experiment, the proposed method is applied to
+two inductors and the SDD21 of the filter with only these two
+EPC-canceled inductors is measured as shown in Fig. 10. The
+capacitance of two cancellation capacitors is N1 = 9.99 pF and
+N2 = 10.24 pF, which are a little bit smaller than EPC1 and
+EPC2 . An L-type EMI filter is then built using these two EPCcanceled inductors and the same capacitor as used in the first
+experiment. The SDD21 of this filter is also measured as shown
+in Fig. 11. The measurement results are compared in Figs. 12
+and 13.
+
+Fig. 15. Equivalent circuit for coupled inductors.
+
+Fig. 16. Winding capacitance cancellation strategy. (a) EPC > CN /2.
+(b) EPC < CN /2.
+
+In Fig. 12, the SDD21 of the original inductor has a parallel
+resonance due to the EPC around 7.5 MHz, which makes the
+inductor performance worse above 10 MHz. After EPC is canceled, the resonance moves to around 28 MHz, which means
+EPC is reduced by 93%. As a result, the filter’s performance improves much above 10 MHz, as shown in Fig. 13. At 30 MHz,
+
+Authorized licensed use limited to: University of Florida. Downloaded on December 30,2020 at 05:55:47 UTC from IEEE Xplore. Restrictions apply.
+
+WANG et al.: INDUCTOR WINDING CAPACITANCE CANCELLATION
+
+315
+
+Fig. 17.
+
+Improvement of inductor filtering performance at high frequencies due to the EPC cancellation.
+
+Fig. 18.
+
+Improvement of filter performance at high frequencies due to the EPC cancellation.
+
+the SDD21 of the EMI filter with canceled EPC has about a
+26-dB (a factor of 200) improvement. The dips around 670 kHz
+in Fig. 13 are caused by the series resonance of C1 .
+When two inductors are coupled, since two inductors are
+located on one core, the effects of the parasitic capacitance
+between two windings cannot be ignored. This will make the
+inductor-winding capacitance different from the separated inductor case. Fig. 14 shows a toroidal inductor with two coupled
+windings.
+In Fig. 14, it is assumed that two windings are exactly same,
+so that all parameters are same. It is also assumed that the
+coupling coefficient between two windings is a unit and that
+the inductance for one winding is L. In Fig. 14(a), there are
+three kinds of parasitic capacitance in the inductor: turn-to-turn
+capacitance Ca , turn-to-core capacitance Cb , and winding-towinding capacitance Cc [6]. Their effects can be represented by
+EPC and CN in Fig. 14(b). EPC represents the effects of Ca
+and Cb . CN represents the effects of Cc and Cb , i.e., the parasitic capacitance between two windings. Fig. 14(b) is inductively decoupled and is equivalent to Fig. 15 using the network
+theory [2].
+In Fig. 15, if EPC > CN /2, then the equivalent winding capacitance is positive. The parallel resonant frequency is given
+
+Fig. 19. EMI measurement for the prototypes in a practical power converter.
+
+by (10). To cancel it, two capacitors with the value of EPC—
+(CN /2) need to be diagonally connected, as shown in Fig. 16(a).
+If EPC < CN /2, then the equivalent winding capacitance is
+negative. There will be no resonance but minimum impedance
+because the negative capacitance is inductive. The frequency
+for the minimum impedance is given by (11). To cancel it, two
+capacitors with the value of (CN /2)–EPC need to be parallel with the windings, as shown in Fig. 16(b). It finally turns
+out that to cancel the negative equivalent winding capacitance,
+more capacitance needs to be paralleled with two windings.
+
+Authorized licensed use limited to: University of Florida. Downloaded on December 30,2020 at 05:55:47 UTC from IEEE Xplore. Restrictions apply.
+
+316
+
+IEEE TRANSACTIONS ON ELECTROMAGNETIC COMPATIBILITY, VOL. 48, NO. 2, MAY 2006
+
+Fig. 20.
+
+EMI noise reduction with winding capacitance cancellation technique.
+
+Fig. 21.
+
+EMI noise reduction with winding capacitance cancellation technique.
+
+These two concepts for positive and negative winding capacitance cancellations correspond to the positive and negative couplings in Fig. 7. The following can be used to determine CN via
+SDD21 measurement:
+f1 =
+
+1
+ 
+
+2π 2L EPC − C2N
+
+(10)
+
+f1 =
+
+1
+ 
+.
+CN
+2π 2L 2 − EPC
+
+(11)
+
+In the experiments, each winding of the coupled inductor
+has an inductance of 20 µH; EPC is 2.2 pF, and EPR is
+3.2 kΩ. The CN is 14.8 pF, which is calculated by (11) via
+SDD21 measurment. Because EPC < (CN /2), then two cancellation capacitors with a capacitance of 5.2 pF each need
+to be parallel with two windings to cancel the equivalent
+winding capacitance −5.2 pF. Fig. 17 shows the measured
+SDD21s for the inductor with and without EPC cancellation. An
+L-type EMI filter is also built using one capacitor (C = 477 nF,
+ESL = 18.5 nH, ESR = 35.4 mΩ) and the coupled inductors.
+
+The SDD21 of this filter with or without EPC cancellation is
+measured and shown in Fig. 18.
+In Fig. 17, three SDD21s, the original SDD21, the SDD21
+with 4-pF cancellation, and the SDD21 with 5.2-pF cancellation
+were measured. It is shown that after two 5.2-pF capacitors
+are paralleled with the two windings, respectively, the inductor
+got the best performance above 5 MHz because the equivalent
+winding capacitance is almost canceled. As a result, the EMI
+filter response is almost flat above 5 MHz. For the original
+case without EPC cancellation, the filter performance is worse
+above 5 MHz, due to the negative equivalent capacitance. The
+performance is therefore greatly improved above 5 MHz using
+proposed EPC cancellation method.
+The proposed technique can also be applied to a common
+mode EMI filter if a ground inductor is allowed in applications.
+One of the practical issues to apply this proposed technique
+into filter production might be the implementation of cancellation capacitor, because its capacitance should be as close to
+winding capacitance as possible. One solution is to use a discrete capacitor parallel with a small PCB capacitor, which is a
+parallel-plate capacitor, composed of two pieces of copper on
+
+Authorized licensed use limited to: University of Florida. Downloaded on December 30,2020 at 05:55:47 UTC from IEEE Xplore. Restrictions apply.
+
+WANG et al.: INDUCTOR WINDING CAPACITANCE CANCELLATION
+
+the top and bottom layers of the PCB. Its capacitance is tuned by
+changing the plate areas so that the total capacitance is close to
+winding capacitance. For massive production, the capacitance
+of the cancellation capacitor can be customized according the
+winding capacitance of the inductor, and therefore, no PCB
+capacitor is needed.
+IV. EMI MEASUREMENT
+Because all the experiments in Section III are under small
+signal excitation and of 50 Ω source and load conditions, it
+is necessary to make sure that the EPC cancellation still gives
+satisfying results with a large signal excitation, current bias,
+and practical source and load, especially for a power electronics
+application. The inductors without EPC cancellation in Figs. 12
+and 17 are first connected to power lines and a practical flyback
+power converter in Fig. 19. The switching frequency of the
+power converter is 97 kHz and its harmonics extend to 30 MHz.
+In Fig. 19, to measure the DM noise, two line-impedancestabilizing networks (LISNs) are connected to power lines and
+the inductors. A noise separator [3] is used to provide 50-Ω load
+impedance for the LISNs and, at the same time, separate the DM
+noise from CM noise. The EMC analyzer, Agilent E7402A, is
+connected to the noise separator for EMI spectrum measurement. A DM noise was then measured and the data were stored.
+In the second step, the EPC-canceled inductors in Figs. 12
+and 17 are then connected to the circuit for EMI noise measurement. The data were also stored. Finally, the stored noise data
+are compared in Figs. 20 and 21. In Fig. 20, for the noncoupled inductors, the measured EMI noise after EPC is canceled is
+much lower than that without EPC cancellation above 5 MHz.
+At 30 MHz, a 22-dB improvement is achieved. In Fig. 21, for
+the coupled inductor, the measured EMI noise after EPC is canceled is much lower than that without EPC cancellation above
+6 MHz. At 30 MHz, a 22-dB improvement is achieved. These
+two experiments show that the proposed method works in practical circuits, even with a larger signal excitation, current bias,
+and non-50-Ω source and load impedances.
+V. CONCLUSION
+The theory and design of using a mutual capacitance concept
+to cancel the effects of parasitic capacitance of inductors is discussed in this paper. The prototypes are first verified by the measurement using a 50-Ω-based network analyzer and then verified
+by the EMI measurements in a practical power converter. The
+measurements show that the proposed method can efficiently
+improve the inductor’s filtering performance beyond its self resonant frequency. By applying the proposed technique, an EMI
+filter design with good high-frequency performance, small size,
+and low cost is therefore possible.
+REFERENCES
+[1] Z.-L. Liang, “Mutual capacitance-duality principle evolved from planar
+network,” IEEE Trans. Circuits Syst. I: Fundam. Theory Appl., vol. 39,
+no. 12, pp. 1005–1006, Dec. 1992.
+[2] R. Chen, J. D. van Wyk, S. Wang, and W. G. Odendaal, “Improving
+the characteristics of integrated EMI filters by embeded conductive lay-
+
+317
+
+ers,” IEEE Trans. Power Electron., vol. 20, no. 3, pp. 611–619, May
+2004.
+[3] S. Wang, F. C. Lee, and W. G. Odendaal, “Characterization, Evaluation
+and design of noise separator for conducted EMI noise diagnosis,” IEEE
+Trans. Power Electron., vol. 20, no. 4, pp. 974–982, Jul. 2004.
+[4] Agilent E5070B/E5071B ENA Series RF Network Analyzers User’s Guide:
+5th ed., Agilent Technologies, 2004.
+[5] A. Massarini and M. K. Kazimierczuk, “Self-capacitance of inductors,”
+IEEE Trans. Power Electron., vol. 12, no. 4, pp. 671–676, Jul. 1997.
+[6] A. Baccigalupi, P. Daponte, and D. Grimaldi, “On a circuit theory approach
+to evaluate the stray capacitances of two coupled inductors,” IEEE Trans.
+Instrum. Meas., vol. 43, no. 5, pp. 774–776, Oct. 1994.
+
+Shuo Wang (S’03–M’06) received the B.S.E.E.
+degree from the Southwest Jiaotong University,
+Chengdu, China, in 1994, the M.S.E.E. degree from
+the Zhejiang University, Hangzhou, China, in 1997,
+and the Ph.D. degree from the Center for Power Electronics Systems (CPES), Virginia Polytechnic Institute and State University (Virginia Tech), Blacksburg,
+in 2005.
+From 1997 to 1999, he was with ZTE Telecommunication Corporation, Shenzhen, China, where he
+was a Senior R&D Engineer and was responsible for
+the development and support of the power supply for wireless products. In 2000,
+he worked at UTstarcom Telecommunication Corporation, Hangzhou, where he
+was responsible for the development and support of the optical access networks.
+Since 2005, he has been a Research Assistant Professor at the CPES. He holds
+one US patent.
+Dr. Wang has served an Associate Editor for the Power Electronics Devices and Components Committee of IEEE TRANSACTIONS ON INDUSTRY
+APPLICATIONS since 2005. He is also the co-recipient of William M. Portnoy
+Award for a paper published in IEEE IAS Annual Conference in 2004.
+
+Fred C. Lee (S’72–M’74–SM’87–F’90) received the
+B.S. degree from the National Cheng Kung University, Tainan City, Taiwan, R.O.C., in 1968 and
+the M.S. and Ph.D. degrees from Duke University,
+Durham, NC, in 1972 and 1974, respectively, all in
+electrical engineering.
+He is currently a University Distinguished Professor at Virginia Polytechnic Institute and State University (Virginia Tech), Blacksburg, where he also
+directs the Center for Power Electronics Systems
+(CPES), which is a national science foundation engineering research center. He holds 30 US patents and has published over 175
+journal articles in refereed journals and more than 400 technical papers in conference proceedings.
+Dr. Lee is a recipient of the Society of Automotive Engineering’s Ralph R.
+Teeter Education Award (1985), Virginia Tech’s Alumni Award for Research
+Excellence (1990), and its College of Engineering Dean’s Award for Excellence in Research (1997). In 1989, he received the William E. Newell Power
+Electronics Award. He is also the recipient of the Power Conversion and Intelligent Motion Award for Leadership in Power Electronics Education (1990),
+the Arthur E. Fury Award for Leadership and Innovation in Advancing Power
+Electronic Systems Technology (1998), and the IEEE Millennium Medal.
+
+Jacobus Daniel van Wyk (F’90) received the
+M.Sc.Eng. degree from the University of Pretoria,
+Gauteng, South Africa, in 1966, the Dr. Sc. Tech.
+(cum laude) degree from the Technical University,
+Eindhoven, The Netherlands, in 1969, and the D.Sc.
+(Eng.) (honoris causa) degree from the University of
+Natal, Durban, South Africa, in 1996.
+From 1961 and 1971, he has worked with the S.A.
+Iron and Steel Corporation, University of Pretoria,
+and the technical and scientific staff of the Technical University, Eindhoven. From 1971 to 1995, he
+was a Chaired Professor of Electrical and Electronic Engineering at the Rand
+Afrikaans University, Johannesburg, South Africa, holding Chairs in electronics
+
+Authorized licensed use limited to: University of Florida. Downloaded on December 30,2020 at 05:55:47 UTC from IEEE Xplore. Restrictions apply.
+
+318
+
+IEEE TRANSACTIONS ON ELECTROMAGNETIC COMPATIBILITY, VOL. 48, NO. 2, MAY 2006
+
+and in power electronics till 1992. He founded the Industrial Electronics
+Technology Research Group with the Faculty of Engineering in 1978 and directed this unit until 1999. Since July 1995, he has held a special University
+Council Research Chair in Industrial Electronics at the Rand Afrikaans University and, since 2000, in a part-time capacity. He joined the Bradley Department
+of Electrical and Computer Engineering, Virginia Polytechnic Institute and State
+University (Virginia Tech), Blacksburg, in January 2000, where he is the J. Byron
+Maupin Professor of Engineering. At Virginia Tech, he is with Center for Power
+Electronics Systems (CPES), which is a national science foundation engineering
+research center, where he leads the High Density Integration Research Thrust.
+He has worked and published in the fields of semiconductors, microelectronics,
+electric materials, electromechanical energy conversion, electric drives, power
+electronics, industrial electronics, control, alternative energy systems, electric
+
+vehicles, and many diverse applications in industry, mining, transportation, and
+electrical energy supply systems. His present research interest is in integrated
+electronic power processors.
+Dr. van Wyk is a Fellow of the South African Institute of Electrical Engineers. He has served as Editor-in-Chief of the IEEE TRANSACTIONS ON POWER
+ELECTRONICS since 2002. He has been a recipient and co-recipient of 20 prize
+papers awards, including 11 IEEE prize paper awards for some of his work, and
+was the recipient of the prestigious IEEE William E. Newell Power Electronics
+Award in 1995 and an IEEE Third Millennium Medal in 2000. He is active in
+several capacities within the IEEE and its societies, as well as in other scientific
+and engineering organizations, especially regarding publishing and organization
+of conferences. He has received a range of other awards from IEEE Societies,
+as well as from the South African Institute of Electrical Engineers.
+
+Authorized licensed use limited to: University of Florida. Downloaded on December 30,2020 at 05:55:47 UTC from IEEE Xplore. Restrictions apply.
+
+

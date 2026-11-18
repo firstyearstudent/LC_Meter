@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mô phỏng SRF/EPC Meter — Khối dao động LC + Relay hiệu chuẩn</title>
+<style>
+:root{
+  --bg:#0b1120; --panel:#141d31; --card:#1c2740; --line:#2e3d5e;
+  --cyan:#38bdf8; --green:#34d399; --amber:#fbbf24; --rose:#fb7185; --violet:#c084fc;
+  --text:#f1f5f9; --muted:#93a4bd;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+body{background:var(--bg);color:var(--text);min-height:100vh;padding:20px}
+h1{font-size:20px;margin-bottom:4px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+.wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;max-width:1240px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--cyan);margin-bottom:10px}
+svg text{font-family:inherit;fill:var(--text);font-size:11.5px}
+svg .lbl{fill:var(--muted);font-size:10px}
+svg .wire{stroke:#7c93b5;stroke-width:1.6;fill:none}
+svg .comp{fill:#12203a;stroke:#38bdf8;stroke-width:1.6}
+.tanknode{fill:#34d399;stroke:#34d399}
+.pulse{animation:pulse 1.1s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 50%}
+@keyframes pulse{0%,100%{opacity:.2;r:5}50%{opacity:1;r:7}}
+.relayarm{transition:transform .2s ease;transform-box:fill-box;transform-origin:50% 0%;transform:rotate(-45deg)}
+.relayarm.closed{transform:rotate(0deg)}
+.flow{stroke-dasharray:5 6;animation:flow .7s linear infinite;stroke:#38bdf8;stroke-width:1.7;fill:none}
+@keyframes flow{to{stroke-dashoffset:-11}}
+canvas{width:100%;height:250px;background:#0a1322;border:1px solid var(--line);border-radius:8px;display:block}
+.ctrl{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;align-items:center;gap:10px}
+.row label{width:150px;font-size:12px;color:var(--muted);flex-shrink:0}
+.row input[type=range]{flex:1;accent-color:var(--cyan)}
+.row .val{width:110px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:.15s}
+.btn:hover{border-color:var(--cyan)}
+.btn.active{background:#0e2a3a;border-color:var(--cyan);color:var(--cyan)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.meter{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.meter .k{font-size:11px;color:var(--muted);margin-bottom:4px}
+.meter .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.meter .d{font-size:10px;color:var(--muted);margin-top:3px}
+.fA{color:var(--cyan)}.fB{color:var(--violet)}.good{color:var(--green)}
+.explain{max-width:1240px;margin:16px auto 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.explain h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--green);margin-bottom:10px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px}
+.step .n{font-size:11px;font-weight:700;color:var(--amber)}
+.step p{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+.note{margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<h1>SRF / EPC Meter — Khối dao động LC + Relay hiệu chuẩn</h1>
+<div class="sub">Phương án B (DUT nối V_BIAS, kẹp Kelvin) · comparator TLV3501 · hai tụ chuẩn 33 pF / 100 pF · mô phỏng chạy ngay trên trình duyệt</div>
+
+<div class="wrap">
+  <!-- ============ SƠ ĐỒ MẠCH (SVG hoạt ảnh) ============ -->
+  <div class="panel">
+    <h2>Sơ đồ mạch (hoạt ảnh)</h2>
+    <svg viewBox="0 0 680 400" width="100%">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#38bdf8"/>
+        </marker>
+      </defs>
+
+      <!-- ===== DUT: cuộn cảm, cold = V_BIAS (tag), hot = tank ===== -->
+      <line x1="250" y1="28" x2="250" y2="62" class="wire"/>
+      <text x="212" y="24" class="lbl">V_BIAS = 1,65 V</text>
+      <text x="212" y="36" class="lbl">(đầu lạnh DUT)</text>
+      <!-- coil -->
+      <path d="M250 62 v6 a8 8 0 0 1 0 16 a8 8 0 0 1 0 16 a8 8 0 0 1 0 16 a8 8 0 0 1 0 16 v6"
+            fill="none" stroke="#fbbf24" stroke-width="2.2"/>
+      <line x1="250" y1="138" x2="250" y2="170" class="wire"/>
+      <text x="260" y="120" class="lbl" fill="#fbbf24">DUT</text>
+      <text x="260" y="132" class="lbl" fill="#fbbf24">Lx (∥ Cp)</text>
+      <!-- Cp (điện dung ký sinh) song song, nét đứt -->
+      <line x1="234" y1="70" x2="234" y2="130" stroke="#fbbf24" stroke-dasharray="3 3" stroke-width="1.2" opacity=".55"/>
+      <line x1="229" y1="70" x2="239" y2="70" stroke="#fbbf24" stroke-width="1.6" opacity=".7"/>
+      <line x1="229" y1="130" x2="239" y2="130" stroke="#fbbf24" stroke-width="1.6" opacity=".7"/>
+
+      <!-- Tank node (IN+) -->
+      <circle cx="250" cy="170" r="6" class="tanknode pulse"/>
+      <text x="262" y="176" class="lbl" fill="#34d399">TANK = IN+</text>
+
+      <!-- ===== C0 = 33pF cố định: tank -> GND ===== -->
+      <line x1="250" y1="170" x2="190" y2="170" class="wire"/>
+      <line x1="190" y1="170" x2="190" y2="210" class="wire"/>
+      <line x1="176" y1="210" x2="204" y2="210" stroke="#7c93b5" stroke-width="2"/>
+      <line x1="176" y1="202" x2="204" y2="202" stroke="#7c93b5" stroke-width="2"/>
+      <line x1="190" y1="202" x2="190" y2="240" class="wire"/>
+      <g stroke="#7c93b5" stroke-width="2">
+        <line x1="178" y1="240" x2="202" y2="240"/>
+        <line x1="183" y1="247" x2="197" y2="247"/>
+        <line x1="187" y1="254" x2="193" y2="254"/>
+      </g>
+      <text x="128" y="168" class="lbl">C0 = 33 pF</text>
+      <text x="120" y="180" class="lbl" fill="#34d399">cố định · C0G 1%</text>
+
+      <!-- ===== Cs = 100pF qua relay: tank -> Cs -> relay -> GND ===== -->
+      <line x1="250" y1="170" x2="130" y2="170" class="wire"/>
+      <line x1="130" y1="170" x2="130" y2="210" class="wire"/>
+      <line x1="116" y1="210" x2="144" y2="210" stroke="#c084fc" stroke-width="2"/>
+      <line x1="116" y1="202" x2="144" y2="202" stroke="#c084fc" stroke-width="2"/>
+      <line x1="130" y1="202" x2="130" y2="290" class="wire"/>
+      <text x="70" y="168" class="lbl" fill="#c084fc">Cs = 100 pF</text>
+      <text x="68" y="180" class="lbl" fill="#c084fc">chuyển mạch · C0G 1%</text>
+      <!-- Relay: pivot (common) nối Cs, arm quay, contact nối GND -->
+      <circle cx="130" cy="290" r="4" fill="#7c93b5"/>
+      <g class="relayarm" id="relayArm">
+        <line x1="130" y1="290" x2="130" y2="330" stroke="#fb7185" stroke-width="3.5"/>
+      </g>
+      <circle cx="130" cy="330" r="4" fill="#fb7185"/>
+      <line x1="130" y1="330" x2="130" y2="352" class="wire"/>
+      <g stroke="#7c93b5" stroke-width="2">
+        <line x1="118" y1="352" x2="142" y2="352"/>
+        <line x1="123" y1="359" x2="137" y2="359"/>
+        <line x1="127" y1="366" x2="133" y2="366"/>
+      </g>
+      <text x="96" y="318" class="lbl" fill="#fb7185">Relay G6K</text>
+      <text x="92" y="330" class="lbl">cuộn hút 3V</text>
+
+      <!-- ===== Comparator TLV3501 ===== -->
+      <line x1="250" y1="170" x2="430" y2="170" class="wire" id="inpWire"/>
+      <path d="M430 160 L430 230 L500 195 Z" class="comp"/>
+      <text x="436" y="166" class="lbl">+</text>
+      <text x="436" y="228" class="lbl">−</text>
+      <text x="428" y="252" class="lbl" fill="#38bdf8">TLV3501</text>
+      <!-- IN- nối V_BIAS -->
+      <line x1="430" y1="215" x2="430" y2="268" class="wire"/>
+      <line x1="430" y1="268" x2="430" y2="282" class="wire"/>
+      <text x="386" y="282" class="lbl">V_BIAS (1,65 V)</text>
+      <!-- OUT -->
+      <line x1="500" y1="195" x2="560" y2="195" class="wire"/>
+      <circle cx="560" cy="195" r="3" fill="#7c93b5"/>
+
+      <!-- ===== Hồi tiếp R12 (duy trì dao động): OUT -> IN+ ===== -->
+      <path d="M560 195 L612 195 L612 100 L360 100 L360 170" class="wire" id="fbWire"/>
+      <rect x="446" y="92" width="42" height="16" fill="none" stroke="#7c93b5" stroke-width="1.6"/>
+      <text x="428" y="88" class="lbl">R12 100k</text>
+      <text x="480" y="105" class="lbl" fill="#34d399">(duy trì dao động)</text>
+      <path d="M560 195 L612 195 L612 100 L360 100 L360 170" class="flow"/>
+
+      <!-- ===== Ra bộ đếm R2 ===== -->
+      <line x1="560" y1="195" x2="560" y2="258" class="wire"/>
+      <rect x="552" y="258" width="16" height="14" fill="none" stroke="#7c93b5" stroke-width="1.5"/>
+      <text x="572" y="270" class="lbl">R2 100Ω</text>
+      <line x1="560" y1="272" x2="560" y2="306" class="wire"/>
+      <rect x="516" y="306" width="88" height="48" rx="6" fill="#0e2a3a" stroke="#38bdf8" stroke-width="1.4"/>
+      <text x="526" y="328" class="lbl" fill="#38bdf8">ESP32-S3</text>
+      <text x="526" y="342" class="lbl">đếm tần nghịch đảo</text>
+      <polygon points="516,306 558,292 558,306" fill="#38bdf8"/>
+      <text x="540" y="284" class="lbl" fill="#38bdf8">xung vuông f → đếm</text>
+
+      <!-- chú giải -->
+      <text x="70" y="392" class="lbl" fill="#34d399">● nút cộng hưởng (dao động liên tục)</text>
+      <text x="340" y="392" class="lbl" fill="#fb7185">● relay đóng/mở Cs</text>
+    </svg>
+  </div>
+
+  <!-- ============ ĐIỀU KHIỂN + KẾT QUẢ ============ -->
+  <div class="panel">
+    <h2>Oscilloscope &amp; kết quả đo</h2>
+    <canvas id="scope" width="640" height="250"></canvas>
+
+    <div class="ctrl">
+      <div class="row">
+        <label>DUT — Lx (cuộn cảm)</label>
+        <input type="range" id="lx" min="0" max="1000" value="0">
+        <span class="val" id="lxVal">10 µH</span>
+      </div>
+      <div class="row">
+        <label>DUT — Cp (điện dung ký sinh)</label>
+        <input type="range" id="cp" min="0" max="1000" value="150">
+        <span class="val" id="cpVal">5 pF</span>
+      </div>
+      <div class="row">
+        <label>Hệ số phẩm chất Q (ảnh hưởng biên độ)</label>
+        <input type="range" id="q" min="10" max="200" value="40">
+        <span class="val" id="qVal">40</span>
+      </div>
+      <div class="row">
+        <button class="btn active" id="btnAuto">Tự động quét relay (A ⇄ B)</button>
+        <button class="btn" id="btnRelay">Bấm: chuyển trạng thái relay</button>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="meter"><div class="k">f₁ — relay MỞ (chỉ 33 pF)</div><div class="v fA" id="mFA">—</div><div class="d">trạng thái A</div></div>
+      <div class="meter"><div class="k">f₂ — relay ĐÓNG (33+100 pF)</div><div class="v fB" id="mFB">—</div><div class="d">trạng thái B</div></div>
+      <div class="meter"><div class="k">Lx đo được</div><div class="v good" id="mLx">—</div><div class="d" id="dLx">khớp với giá trị đặt</div></div>
+      <div class="meter"><div class="k">Cp đo được (EPC)</div><div class="v good" id="mCp">—</div><div class="d" id="dCp">điện dung ký sinh</div></div>
+      <div class="meter"><div class="k">f<sub>SRF</sub> đo được</div><div class="v" id="mSRF">—</div><div class="d">tần số tự cộng hưởng</div></div>
+      <div class="meter"><div class="k">K = (f₁/f₂)²</div><div class="v" id="mK">—</div><div class="d">hệ số giải</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ GIẢI THÍCH VÀO → RA ============ -->
+<div class="explain">
+  <h2>Đầu vào → xử lý → đầu ra</h2>
+  <div class="steps">
+    <div class="step"><div class="n">1 · ĐẦU VÀO</div><p>Cuộn cảm chưa biết <b>Lx</b>, <b>Cp</b> kẹp vào 2 chấu Kelvin. Nó song song với tụ chuẩn tạo khung cộng hưởng LC.</p></div>
+    <div class="step"><div class="n">2 · DAO ĐỘNG</div><p>Comparator TLV3501 cảm nhận điện áp khung và tự duy trì dao động qua R12. Tần số = 1/(2π√(Lx·C)).</p></div>
+    <div class="step"><div class="n">3 · RELAY HIỆU CHUẨN</div><p>Relay G6K đóng/mở Cs=100 pF → đo 2 tần số f₁, f₂. ESP32-S3 đếm nghịch đảo chính xác.</p></div>
+    <div class="step"><div class="n">4 · ĐẦU RA</div><p>K=(f₁/f₂)² → C_A = Cs/(K−1) → tách <b>Cp</b>, suy ra <b>Lx</b>, ngoại suy <b>f<sub>SRF</sub></b> → OLED.</p></div>
+  </div>
+  <div class="note">
+    <b>Ghi chú độ chính xác:</b> mô phỏng này dùng mô hình lý tưởng nên kết quả đo trùng khớp giá trị đặt. Trong thực tế, sai số đến từ: dung sai tụ chuẩn (phải C0G ±1%), điện dung ký sinh gá đo Cstray (phải hiệu chuẩn), và độ trễ truyền dẫn tpd ≈ 4,5 ns của TLV3501 (bù bằng firmware). Công thức: K=(f₁/f₂)², C_A = Cs/(K−1), Cp = C_A − (C0+Cstray), Lx = 1/((2πf₁)²·C_A).
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============ Tham số mạch ============ */
+const C18 = 33e-12;   // tụ chuẩn cố định
+const C12 = 100e-12;  // tụ chuẩn qua relay
+const Cstray = 5e-12; // điện dung ký sinh gá đo (đã hiệu chuẩn)
+const VBIAS = 1.65;
+
+let Lx = 10e-6, Cp = 5e-12, Q = 40;
+let relayClosed = false;  // false = trạng thái A (mở), true = trạng thái B (đóng)
+let autoTimer = null;
+
+const $ = id => document.getElementById(id);
+
+/* ============ Slider ============ */
+function logSlider(v, lo, hi){ return Math.pow(10, Math.log10(lo) + (v/1000)*(Math.log10(hi)-Math.log10(lo))); }
+function fmtL(x){ if(x>=1e-3) return (x*1e3).toPrecision(3)+' mH'; if(x>=1e-6) return (x*1e6).toPrecision(3)+' µH'; return (x*1e9).toPrecision(3)+' nH'; }
+function fmtC(x){ if(x>=1e-9) return (x*1e9).toPrecision(3)+' nF'; return (x*1e12).toPrecision(3)+' pF'; }
+function fmtF(x){ if(x>=1e6) return (x/1e6).toPrecision(4)+' MHz'; if(x>=1e3) return (x/1e3).toPrecision(4)+' kHz'; return x.toPrecision(4)+' Hz'; }
+
+function updateSliders(){
+  Lx = logSlider(+$('lx').value, 10e-6, 100e-3);
+  Cp = logSlider(+$('cp').value, 2e-12, 500e-12);
+  Q = +$('q').value;
+  $('lxVal').textContent = fmtL(Lx);
+  $('cpVal').textContent = fmtC(Cp);
+  $('qVal').textContent = Q;
+}
+$('lx').addEventListener('input', updateSliders);
+$('cp').addEventListener('input', updateSliders);
+$('q').addEventListener('input', updateSliders);
+
+/* ============ Mô hình đo (chính xác) ============ */
+function totalC(closed){ return C18 + (closed ? C12 : 0) + Cstray + Cp; }
+function freqOf(closed){ return 1/(2*Math.PI*Math.sqrt(Lx * totalC(closed))); }
+
+function measure(){
+  const fA = freqOf(false), fB = freqOf(true);
+  const K = (fA/fB)*(fA/fB);
+  const CA = C12/(K-1);
+  const Cp_m = CA - (C18 + Cstray);
+  const Lx_m = 1/((2*Math.PI*fA)**2 * CA);
+  const SRF = 1/(2*Math.PI*Math.sqrt(Lx_m * Math.max(Cp_m, 1e-15)));
+  return {fA, fB, K, Cp_m, Lx_m, SRF};
+}
+
+function updateMeters(){
+  const m = measure();
+  $('mFA').textContent = fmtF(m.fA);
+  $('mFB').textContent = fmtF(m.fB);
+  $('mK').textContent = m.K.toFixed(3);
+  $('mLx').textContent = fmtL(m.Lx_m);
+  $('mCp').textContent = fmtC(m.Cp_m);
+  $('mSRF').textContent = fmtF(m.SRF);
+  const eL = Math.abs(m.Lx_m - Lx)/Lx*100;
+  const eC = Math.abs(m.Cp_m - Cp)/Math.max(Cp, 1e-14)*100;
+  $('dLx').textContent = (eL < 0.01 ? 'khớp chính xác' : 'sai số ' + eL.toFixed(2) + '%');
+  $('dCp').textContent = (eC < 0.01 ? 'khớp chính xác' : 'sai số ' + eC.toFixed(2) + '%');
+  // relay arm
+  $('relayArm').classList.toggle('closed', relayClosed);
+}
+
+/* ============ Relay điều khiển ============ */
+$('btnRelay').addEventListener('click', ()=>{ relayClosed = !relayClosed; updateMeters(); });
+$('btnAuto').addEventListener('click', ()=>{
+  const on = $('btnAuto').classList.toggle('active');
+  if(on){ autoTimer = setInterval(()=>{ relayClosed = !relayClosed; }, 1600); }
+  else if(autoTimer){ clearInterval(autoTimer); }
+});
+
+/* ============ Oscilloscope ============ */
+const cv = $('scope'), ctx = cv.getContext('2d');
+let phase = 0, lastT = performance.now();
+
+function drawScope(){
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle = '#16223a'; ctx.lineWidth = 1;
+  for(let x=0;x<W;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for(let y=0;y<H;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  const f = freqOf(relayClosed);
+  const topBase = 68, botBase = 186, ampT = 46;
+  ctx.strokeStyle = '#33415e'; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(0,topBase); ctx.lineTo(W,topBase); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#93a4bd'; ctx.font = '11px monospace';
+  ctx.fillText('TANK (quanh V_BIAS 1,65V) — f = ' + fmtF(f), 8, 15);
+  ctx.fillText('OUT comparator (xung vuông 0 / 3,3V)', 8, 118);
+
+  const T = 1/f, window = T*5, samples = 800;
+  // sóng tank (hình sin)
+  ctx.beginPath();
+  for(let i=0;i<samples;i++){
+    const t = (i/samples)*window, ph = 2*Math.PI*f*t + phase;
+    const y = topBase - Math.sin(ph)*ampT;
+    i===0 ? ctx.moveTo(i/samples*W, y) : ctx.lineTo(i/samples*W, y);
+  }
+  ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2; ctx.stroke();
+  // sóng vuông OUT
+  ctx.beginPath();
+  for(let i=0;i<samples;i++){
+    const t = (i/samples)*window, ph = 2*Math.PI*f*t + phase;
+    const y = botBase - (Math.sin(ph) > 0 ? 40 : 0);
+    i===0 ? ctx.moveTo(i/samples*W, y) : ctx.lineTo(i/samples*W, y);
+  }
+  ctx.strokeStyle = '#fb7185'; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.fillStyle = relayClosed ? '#c084fc' : '#34d399';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('Relay: ' + (relayClosed ? 'ĐÓNG (Cs=100 pF nối vào)' : 'MỞ (chỉ C0=33 pF)'), 8, H-10);
+}
+
+function loop(now){
+  const dt = Math.min(50, now - lastT); lastT = now;
+  phase += 2*Math.PI*freqOf(relayClosed)*(dt/1000);
+  drawScope();
+  updateMeters();
+  requestAnimationFrame(loop);
+}
+
+/* ============ Khởi động ============ */
+updateSliders();
+autoTimer = setInterval(()=>{ relayClosed = !relayClosed; }, 1600);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô Phỏng Chuyên Sâu: Khối Dao Động LC (TLV3501) & Khối Relay Hiệu Chuẩn (Omron G6K)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-body: #090d16;
+            --bg-panel: #131b2e;
+            --bg-card: #1c2640;
+            --border: #2d3b5e;
+            --cyan: #38bdf8;
+            --green: #34d399;
+            --amber: #fbbf24;
+            --purple: #c084fc;
+            --rose: #fb7185;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 16px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1480px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 12px 0 20px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            color: var(--cyan);
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* Scenarios Bar */
+        .scenario-nav {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .scen-btn {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .scen-btn:hover {
+            border-color: var(--cyan);
+            color: var(--text-main);
+        }
+
+        .scen-btn.active {
+            background: var(--cyan);
+            color: #090d16;
+            border-color: var(--cyan);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1100px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .panel-header {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--cyan);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Interactive Controls */
+        .slider-group {
+            margin-bottom: 14px;
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .slider-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #25334d;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .badge-val {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        /* Circuit Schematics & Blocks Layout */
+        .circuit-display {
+            background: #0f1626;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            position: relative;
+            margin-bottom: 18px;
+        }
+
+        .circuit-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .circuit-cols {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .block-box {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            transition: all 0.3s;
+        }
+
+        .block-box.active-p1 {
+            border-color: var(--green);
+            box-shadow: 0 0 12px rgba(52, 211, 153, 0.2);
+        }
+
+        .block-box.active-p2 {
+            border-color: var(--amber);
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.2);
+        }
+
+        .block-tag {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .tag-relay { background: rgba(251, 191, 36, 0.18); color: var(--amber); }
+        .tag-osc { background: rgba(56, 189, 248, 0.18); color: var(--cyan); }
+
+        .block-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .comp-pin-list {
+            font-size: 11px;
+            font-family: monospace;
+            color: #cbd5e1;
+            line-height: 1.6;
+            background: #0a0f1d;
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+
+        /* Oscilloscope Waveform Box */
+        .scope-container {
+            height: 300px;
+            background: #0b111e;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        /* Component States Table */
+        .state-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .state-table th, .state-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .state-table th {
+            background: #172138;
+            color: var(--cyan);
+            font-weight: 700;
+        }
+
+        .state-table tr:hover {
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .pill-active { background: rgba(52, 211, 153, 0.2); color: var(--green); border: 1px solid var(--green); }
+        .pill-off { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); border: 1px solid #475569; }
+        .pill-alert { background: rgba(251, 191, 36, 0.2); color: var(--amber); border: 1px solid var(--amber); }
+
+        /* IO Info Cards */
+        .io-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 800px) {
+            .io-summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .io-card {
+            background: #162035;
+            border-radius: 8px;
+            padding: 10px;
+            border-left: 3px solid var(--cyan);
+            font-size: 12px;
+        }
+
+        .io-title {
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .io-val {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>MÔ PHỎNG CHI TIẾT: KHỐI DAO ĐỘNG LC (TLV3501) & KHỐI RELAY HIỆU CHUẨN (OMRON G6K)</h1>
+        <p>Phân tích chi tiết Đầu Vào / Đầu Ra, Trạng thái điện tử của từng linh kiện qua các Kịch bản đo lường thực tế</p>
+    </header>
+
+    <!-- Scenarios Navigation -->
+    <div class="scenario-nav">
+        <button class="scen-btn active" id="btn-p1" onclick="setScenario('P1')">
+            <span>🔘</span> Kịch bản 1: Đo Pha 1 (Relay Nhả - Tụ C1 = 33pF)
+        </button>
+        <button class="scen-btn" id="btn-p2" onclick="setScenario('P2')">
+            <span>⚡</span> Kịch bản 2: Đo Pha 2 (Relay Hút - Thêm C2 = 100pF)
+        </button>
+        <button class="scen-btn" id="btn-auto" onclick="setScenario('AUTO')">
+            <span>🔄</span> Kịch bản 3: Chu kỳ Đo Kép Tự Động (4 Hz)
+        </button>
+        <button class="scen-btn" id="btn-open" onclick="setScenario('OPEN')">
+            <span>🔓</span> Kịch bản 4: Hiệu Chuẩn OPEN (Đo Cstray)
+        </button>
+        <button class="scen-btn" id="btn-short" onclick="setScenario('SHORT')">
+            <span>🔒</span> Kịch bản 5: Hiệu Chuẩn SHORT (Đo Llead)
+        </button>
+        <button class="scen-btn" id="btn-idle" onclick="setScenario('IDLE')">
+            <span>💤</span> Kịch bản 6: Chế Độ Chờ (Standby)
+        </button>
+    </div>
+
+    <div class="grid-layout">
+        <!-- Sidebar Controls & Parameter Adjustments -->
+        <div class="left-col">
+            <div class="panel">
+                <div class="panel-header">
+                    <span>🎛️ Tham Số Cuộn Cảm Đo (DUT)</span>
+                </div>
+
+                <div class="slider-group">
+                    <label>
+                        <span>Độ tự cảm thực (Lx):</span>
+                        <span id="txt-lx" class="badge-val">47.0 µH</span>
+                    </label>
+                    <input type="range" id="rng-lx" min="10" max="1000" step="5" value="47" oninput="recalc()">
+                </div>
+
+                <div class="slider-group">
+                    <label>
+                        <span>Điện dung ký sinh (EPC / Cp):</span>
+                        <span id="txt-cp" class="badge-val">5.0 pF</span>
+                    </label>
+                    <input type="range" id="rng-cp" min="2" max="50" step="0.5" value="5" oninput="recalc()">
+                </div>
+
+                <div class="slider-group">
+                    <label>
+                        <span>Điện trở tổn hao dây (Rs):</span>
+                        <span id="txt-rs" class="badge-val">0.80 Ω</span>
+                    </label>
+                    <input type="range" id="rng-rs" min="0.1" max="5" step="0.1" value="0.8" oninput="recalc()">
+                </div>
+
+                <div class="slider-group">
+                    <label>
+                        <span>Điện dung ký sinh mạch (Cstray):</span>
+                        <span id="txt-cstray" class="badge-val">4.5 pF</span>
+                    </label>
+                    <input type="range" id="rng-cstray" min="1" max="12" step="0.5" value="4.5" oninput="recalc()">
+                </div>
+
+                <div style="margin-top: 16px; padding: 12px; background: #0a1120; border-radius: 8px; font-size: 12px; border-left: 3px solid var(--amber);">
+                    <div style="font-weight: 700; color: var(--amber); margin-bottom: 4px;">Tóm Tắt Tần Số Cộng Hưởng:</div>
+                    <div>• Tần số tự cộng hưởng fSRF: <strong id="lbl-srf" style="color:#fff;">--</strong></div>
+                    <div>• Tần số dao động f1 (Pha 1): <strong id="lbl-f1" style="color:var(--cyan);">--</strong></div>
+                    <div>• Tần số dao động f2 (Pha 2): <strong id="lbl-f2" style="color:var(--amber);">--</strong></div>
+                    <div>• Tỷ số bình phương K = (f1/f2)²: <strong id="lbl-k" style="color:var(--green);">--</strong></div>
+                </div>
+            </div>
+
+            <!-- Signal Flow Card -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>📡 Luồng Đầu Vào / Đầu Ra</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+                    <div style="margin-bottom: 8px;">
+                        <strong style="color:var(--cyan);">[ĐẦU VÀO]:</strong>
+                        <ul style="padding-left: 18px; margin-top: 4px;">
+                            <li>Nguồn: <code>3.3VA</code> (nuôi TLV3501), <code>3.3VD</code> (cuộn hút Relay).</li>
+                            <li>Lệnh điều khiển: <code>/RELAY1_CTRL</code> từ GPIO20 (ESP32-S3).</li>
+                            <li>Linh kiện đo: Gá kẹp <code>J1</code> nối cuộn cảm DUT (Lx, Cp, Rs).</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <strong style="color:var(--green);">[ĐẦU RA]:</strong>
+                        <ul style="padding-left: 18px; margin-top: 4px;">
+                            <li>Xung đếm số: <code>/LC_PULSE</code> (Xung vuông 0V - 3.3V, Duty 50%) đưa vào GPIO4 (PCNT + MCPWM Capture).</li>
+                            <li>Điện áp nội bộ: Sóng sin tại nút <code>/LC_TANK</code> (~300mVpp quanh 1.65V).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="right-col">
+            <!-- 3 Summary IO cards -->
+            <div class="io-summary-grid">
+                <div class="io-card">
+                    <div class="io-title">Tín hiệu điều khiển Relay</div>
+                    <div class="io-val" id="card-ctrl">RELAY1_CTRL: 0.0V (LOW)</div>
+                </div>
+                <div class="io-card">
+                    <div class="io-title">Điện áp tại Nút LC_TANK</div>
+                    <div class="io-val" id="card-tank">V_tank: ~320 mVpp @ f1</div>
+                </div>
+                <div class="io-card">
+                    <div class="io-title">Xung vuông ra (/LC_PULSE)</div>
+                    <div class="io-val" id="card-pulse">0V - 3.3V | Duty: 50.0%</div>
+                </div>
+            </div>
+
+            <!-- Virtual Oscilloscope -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>📺 Máy Hiện Sóng Ảo (Virtual 4-Channel Oscilloscope)</span>
+                    <span id="scope-status" style="font-size: 11px; color: var(--green); font-family: monospace;">TRIGGER: LOCKED</span>
+                </div>
+                <div class="scope-container">
+                    <canvas id="scopeCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Component Physical & Electrical State Table -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>📋 Bảng Trạng Thái Linh Kiện Chi Tiết Theo Kịch Bản Đo</span>
+                    <span id="badge-scen" class="status-pill pill-active">KỊCH BẢN 1: PHA 1 (RELAY NHẢ)</span>
+                </div>
+
+                <table class="state-table">
+                    <thead>
+                        <tr>
+                            <th>Ký hiệu</th>
+                            <th>Linh kiện</th>
+                            <th>Trạng thái hoạt động</th>
+                            <th>Điện áp / Dòng điện chi tiết</th>
+                            <th>Vai trò kỹ thuật trong kịch bản</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Detailed Explanation Box -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>💡 Phân Tích Cơ Chế Hoạt Động Mạch Tại Kịch Bản Hiện Tại</span>
+                </div>
+                <div id="scen-desc" style="font-size: 13px; color: #cbd5e1; line-height: 1.6;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentScenario = 'P1';
+    let autoInterval = null;
+    let autoToggle = false;
+    let scopeChart = null;
+
+    const C1_NOM = 33.0e-12;   // C18 = 33pF
+    const C2_ADD = 100.0e-12;  // C12 = 100pF
+    const TPD = 4.5e-9;        // TLV3501 delay
+
+    function setScenario(scen) {
+        currentScenario = scen;
+        clearInterval(autoInterval);
+
+        document.querySelectorAll('.scen-btn').forEach(b => b.classList.remove('active'));
+        if (scen === 'P1') document.getElementById('btn-p1').classList.add('active');
+        if (scen === 'P2') document.getElementById('btn-p2').classList.add('active');
+        if (scen === 'AUTO') {
+            document.getElementById('btn-auto').classList.add('active');
+            autoInterval = setInterval(() => {
+                autoToggle = !autoToggle;
+                renderScenario(autoToggle ? 'P1' : 'P2');
+            }, 250); // 4Hz refresh
+            return;
+        }
+        if (scen === 'OPEN') document.getElementById('btn-open').classList.add('active');
+        if (scen === 'SHORT') document.getElementById('btn-short').classList.add('active');
+        if (scen === 'IDLE') document.getElementById('btn-idle').classList.add('active');
+
+        renderScenario(scen);
+    }
+
+    function recalc() {
+        if (currentScenario === 'AUTO') {
+            renderScenario(autoToggle ? 'P1' : 'P2');
+        } else {
+            renderScenario(currentScenario);
+        }
+    }
+
+    function renderScenario(scen) {
+        const lx_uH = parseFloat(document.getElementById('rng-lx').value);
+        const cp_pF = parseFloat(document.getElementById('rng-cp').value);
+        const rs_ohm = parseFloat(document.getElementById('rng-rs').value);
+        const cstray_pF = parseFloat(document.getElementById('rng-cstray').value);
+
+        document.getElementById('txt-lx').innerText = lx_uH.toFixed(1) + ' µH';
+        document.getElementById('txt-cp').innerText = cp_pF.toFixed(1) + ' pF';
+        document.getElementById('txt-rs').innerText = rs_ohm.toFixed(2) + ' Ω';
+        document.getElementById('txt-cstray').innerText = cstray_pF.toFixed(1) + ' pF';
+
+        const Lx = lx_uH * 1e-6;
+        const Cp = cp_pF * 1e-12;
+        const Cstray = cstray_pF * 1e-12;
+
+        const Ctot1 = C1_NOM + Cstray + Cp;
+        const Ctot2 = C1_NOM + C2_ADD + Cstray + Cp;
+
+        const f1_ideal = 1.0 / (2 * Math.PI * Math.sqrt(Lx * Ctot1));
+        const f2_ideal = 1.0 / (2 * Math.PI * Math.sqrt(Lx * Ctot2));
+        const fSRF_calc = 1.0 / (2 * Math.PI * Math.sqrt(Lx * Cp));
+
+        const f1_meas = f1_ideal / (1.0 + 2.0 * TPD * f1_ideal);
+        const f2_meas = f2_ideal / (1.0 + 2.0 * TPD * f2_ideal);
+        const K_ratio = Math.pow(f1_meas / f2_meas, 2);
+
+        document.getElementById('lbl-srf').innerText = (fSRF_calc / 1e6).toFixed(2) + ' MHz';
+        document.getElementById('lbl-f1').innerText = (f1_meas / 1e6).toFixed(3) + ' MHz';
+        document.getElementById('lbl-f2').innerText = (f2_meas / 1e6).toFixed(3) + ' MHz';
+        document.getElementById('lbl-k').innerText = K_ratio.toFixed(3);
+
+        const badge = document.getElementById('badge-scen');
+        const cardCtrl = document.getElementById('card-ctrl');
+        const cardTank = document.getElementById('card-tank');
+        const cardPulse = document.getElementById('card-pulse');
+        const tbody = document.getElementById('table-body');
+        const desc = document.getElementById('scen-desc');
+
+        let rows = '';
+        let currentF = f1_meas;
+        let isRelayEnergized = false;
+
+        if (scen === 'P1') {
+            badge.innerText = 'KỊCH BẢN 1: PHA 1 (RELAY NHẢ - ĐO f1)';
+            badge.className = 'status-pill pill-active';
+            cardCtrl.innerText = 'RELAY1_CTRL: 0.0V (LOW)';
+            cardTank.innerText = 'V_tank: ~320 mVpp @ ' + (f1_meas/1e6).toFixed(2) + ' MHz';
+            cardPulse.innerText = 'f1 = ' + (f1_meas/1e6).toFixed(3) + ' MHz | 50% Duty';
+            currentF = f1_meas;
+            isRelayEnergized = false;
+
+            rows = `
+                <tr>
+                    <td><strong>K2</strong></td>
+                    <td>Rơ-le Omron G6K</td>
+                    <td><span class="status-pill pill-off">NHẢ (De-energized)</span></td>
+                    <td>V_coil = 0V | I_coil = 0 mA | Tiếp điểm 3-4: <strong>HỞ (OPEN)</strong></td>
+                    <td>Cách ly hoàn toàn tụ C12 (100pF). Khung dao động chỉ gồm cuộn cảm + C18 (33pF).</td>
+                </tr>
+                <tr>
+                    <td><strong>Q4</strong></td>
+                    <td>Transistor SS8050 NPN</td>
+                    <td><span class="status-pill pill-off">NGẮT (Cut-off)</span></td>
+                    <td>V_BE = 0V &lt; 0.6V | I_B = 0 µA | V_CE = 3.3V | I_C = 0 mA</td>
+                    <td>Không cho dòng điện chạy qua cuộn hút K2. Cuộn hút không hoạt động.</td>
+                </tr>
+                <tr>
+                    <td><strong>D1</strong></td>
+                    <td>Diode 1N4148W</td>
+                    <td><span class="status-pill pill-off">PHÂN CỰC NGƯỢC</span></td>
+                    <td>V_Anode = 3.3V | V_Cathode = 3.3V | V_D = 0V | I_D = 0 µA</td>
+                    <td>Chờ sẵn ở trạng thái khóa để dập xung tự cảm khi ngắt rơ-le.</td>
+                </tr>
+                <tr>
+                    <td><strong>C18</strong></td>
+                    <td>Tụ C0G 33pF ±1%</td>
+                    <td><span class="status-pill pill-active">KẾT NỐI KHUNG LC</span></td>
+                    <td>Dao động sin ~320 mVpp @ f1 = ${(f1_meas/1e6).toFixed(2)} MHz</td>
+                    <td>Đóng vai trò tụ chuẩn nền C1, quyết định tần số dao động thứ nhất f1.</td>
+                </tr>
+                <tr>
+                    <td><strong>C12</strong></td>
+                    <td>Tụ C0G 100pF ±1%</td>
+                    <td><span class="status-pill pill-off">CÁCH LY HOÀN TOÀN</span></td>
+                    <td>V_pad2 = 0V (thả nổi) | Không có dòng nạp xả</td>
+                    <td>Chờ ở trạng thái hở mạch để chuẩn bị đóng vào ở Pha 2.</td>
+                </tr>
+                <tr>
+                    <td><strong>U2</strong></td>
+                    <td>Comparator TLV3501</td>
+                    <td><span class="status-pill pill-active">DAO ĐỘNG TÍCH CỰC</span></td>
+                    <td>IN+ = 1.65V ± 160mV | IN- = 1.65V DC | OUT: Xung 0-3.3V</td>
+                    <td>Khóa pha Barkhausen, chuyển sóng sin khung LC thành xung vuông tần số f1.</td>
+                </tr>
+                <tr>
+                    <td><strong>R12</strong></td>
+                    <td>Trở 100kΩ hồi tiếp</td>
+                    <td><span class="status-pill pill-active">HỒI TIẾP DƯƠNG</span></td>
+                    <td>Dòng bơm đồng pha: i_drive ≈ ±16.5 µA vào IN+</td>
+                    <td>Bù đắp liên tục tổn hao công suất trên Rs của cuộn cảm để giữ dao động không tắt.</td>
+                </tr>
+            `;
+
+            desc.innerHTML = `
+                • <strong>Trạng thái logic:</strong> ESP32-S3 đặt chân <code>/RELAY1_CTRL = 0V</code>. Transistor <strong>Q4 ngắt</strong>, rơ-le <strong>K2 nhả</strong>.<br>
+                • <strong>Mạch tương đương:</strong> Nút <code>/LC_TANK</code> chỉ nối với tụ chuẩn nền <strong>C18 (33 pF)</strong> + điện dung ký sinh <strong>(Cstray + Cp)</strong>. Tụ C12 (100 pF) bị ngắt hở.<br>
+                • <strong>Xử lý tín hiệu:</strong> Khung LC tự kích dao động tại tần số cao hơn <code>f1 = ${(f1_meas/1e6).toFixed(3)} MHz</code>. TLV3501 tạo xung vuông <code>/LC_PULSE</code> đưa về bộ đếm phần cứng PCNT mở cửa sổ 100 ms để đo chính xác số xung Nx1.
+            `;
+        } else if (scen === 'P2') {
+            badge.innerText = 'KỊCH BẢN 2: PHA 2 (RELAY HÚT - ĐO f2)';
+            badge.className = 'status-pill pill-alert';
+            cardCtrl.innerText = 'RELAY1_CTRL: 3.3V (HIGH)';
+            cardTank.innerText = 'V_tank: ~280 mVpp @ ' + (f2_meas/1e6).toFixed(2) + ' MHz';
+            cardPulse.innerText = 'f2 = ' + (f2_meas/1e6).toFixed(3) + ' MHz | 50% Duty';
+            currentF = f2_meas;
+            isRelayEnergized = true;
+
+            rows = `
+                <tr>
+                    <td><strong>K2</strong></td>
+                    <td>Rơ-le Omron G6K</td>
+                    <td><span class="status-pill pill-active">HÚT (Energized)</span></td>
+                    <td>V_coil = 3.2V | I_coil ≈ 33.3 mA (100 mW) | Tiếp điểm 3-4: <strong>ĐÓNG (CLOSED)</strong></td>
+                    <td>Mắc song song tụ C12 (100pF) vào nút /LC_TANK, hạ tần số cộng hưởng xuống f2.</td>
+                </tr>
+                <tr>
+                    <td><strong>Q4</strong></td>
+                    <td>Transistor SS8050 NPN</td>
+                    <td><span class="status-pill pill-active">BÃO HÒA (Saturation)</span></td>
+                    <td>V_BE ≈ 0.72V | I_B ≈ 0.55 mA | V_CE(sat) ≈ 0.08V | I_C ≈ 33.3 mA</td>
+                    <td>Kéo chân 8 cuộn hút K2 xuống sát GND để cấp dòng đóng rơ-le.</td>
+                </tr>
+                <tr>
+                    <td><strong>D1</strong></td>
+                    <td>Diode 1N4148W</td>
+                    <td><span class="status-pill pill-off">PHÂN CỰC NGƯỢC</span></td>
+                    <td>V_Anode ≈ 0.08V | V_Cathode = 3.3V | V_R ≈ 3.22V | I_D = 0 µA</td>
+                    <td>Khóa phân cực ngược, sẵn sàng xả dòng dập xung ngay khi Q4 ngắt.</td>
+                </tr>
+                <tr>
+                    <td><strong>C18</strong></td>
+                    <td>Tụ C0G 33pF ±1%</td>
+                    <td><span class="status-pill pill-active">KẾT NỐI KHUNG LC</span></td>
+                    <td>Mắc song song cùng C12. Dao động sin @ f2 = ${(f2_meas/1e6).toFixed(2)} MHz</td>
+                    <td>Cùng với C12 tạo tổng dung lượng tụ chuẩn C2_total = 133 pF.</td>
+                </tr>
+                <tr>
+                    <td><strong>C12</strong></td>
+                    <td>Tụ C0G 100pF ±1%</td>
+                    <td><span class="status-pill pill-active">MẮC SONG SONG LC</span></td>
+                    <td>Dao động sin @ f2 = ${(f2_meas/1e6).toFixed(2)} MHz</td>
+                    <td>Được nối thông vào nút LC_TANK qua tiếp điểm 3-4 của K2, "kéo giãn" tần số xuống thấp.</td>
+                </tr>
+                <tr>
+                    <td><strong>U2</strong></td>
+                    <td>Comparator TLV3501</td>
+                    <td><span class="status-pill pill-active">DAO ĐỘNG TÍCH CỰC</span></td>
+                    <td>IN+ = 1.65V ± 140mV | IN- = 1.65V DC | OUT: Xung 0-3.3V @ f2</td>
+                    <td>Tự động bám tần số cộng hưởng mới f2, chuyển hóa thành xung vuông đưa về ESP32-S3.</td>
+                </tr>
+                <tr>
+                    <td><strong>R12</strong></td>
+                    <td>Trở 100kΩ hồi tiếp</td>
+                    <td><span class="status-pill pill-active">HỒI TIẾP DƯƠNG</span></td>
+                    <td>Dòng bơm đồng pha: i_drive ≈ ±16.5 µA vào IN+</td>
+                    <td>Duy trì dao động bền vững ở tần số f2.</td>
+                </tr>
+            `;
+
+            desc.innerHTML = `
+                • <strong>Trạng thái logic:</strong> ESP32-S3 kích <code>/RELAY1_CTRL = 3.3V</code>. Dòng qua R4 (4.7k) làm <strong>Q4 dẫn bão hòa</strong>, cuộn hút <strong>K2 hút</strong> tiếp điểm 3 chập vào 4.<br>
+                • <strong>Mạch tương đương:</strong> Tụ <strong>C12 (100 pF)</strong> được đóng song song vào nút <code>/LC_TANK</code> $\\implies$ Tổng điện dung tăng lên <code>C_total = 133 pF + Cstray + Cp</code>.<br>
+                • <strong>Xử lý tín hiệu:</strong> Tần số bị kéo tụt xuống <code>f2 = ${(f2_meas/1e6).toFixed(3)} MHz</code> (thấp hơn f1). ESP32-S3 chốt số xung Nx2 trong 100 ms.<br>
+                • <strong>Giải thuật toán tức thời:</strong> MCU lấy cặp (f1, f2) giải ngay hệ phương trình IEEE Std 389 để suy ra đồng thời: <strong>Lx = ${lx_uH.toFixed(2)} µH</strong>, <strong>Cp = ${cp_pF.toFixed(2)} pF</strong> và <strong>fSRF = ${(fSRF_calc/1e6).toFixed(2)} MHz</strong>!
+            `;
+        } else if (scen === 'OPEN') {
+            badge.innerText = 'KỊCH BẢN 4: HIỆU CHUẨN OPEN (ĐO Cstray)';
+            badge.className = 'status-pill pill-active';
+            cardCtrl.innerText = 'RELAY1_CTRL: 0.0V (LOW)';
+            cardTank.innerText = 'HỞ MẠCH GÁ ĐO (DUT = OPEN)';
+            cardPulse.innerText = 'Cstray = ' + cstray_pF.toFixed(2) + ' pF | Đã lưu Flash';
+            currentF = 0;
+            isRelayEnergized = false;
+
+            rows = `
+                <tr>
+                    <td><strong>J1 (SMA)</strong></td>
+                    <td>Cổng kẹp đo</td>
+                    <td><span class="status-pill pill-alert">HỞ MẠCH (OPEN)</span></td>
+                    <td>R_hở = ∞ | Không cắm cuộn cảm DUT</td>
+                    <td>Toàn bộ điện dung ký sinh phân bố giữa đường mạch PCB và đầu gá đo lộ diện thành Cstray.</td>
+                </tr>
+                <tr>
+                    <td><strong>K2</strong></td>
+                    <td>Rơ-le Omron G6K</td>
+                    <td><span class="status-pill pill-off">NHẢ</span></td>
+                    <td>I_coil = 0 mA | Tiếp điểm 3-4: Hở</td>
+                    <td>Tách C12, chỉ để tụ chuẩn nội C18 tham gia hiệu chuẩn.</td>
+                </tr>
+                <tr>
+                    <td><strong>Firmware</strong></td>
+                    <td>Thuật toán ESP32-S3</td>
+                    <td><span class="status-pill pill-active">TÍNH OFFSET ZERO</span></td>
+                    <td>Giải ngược Cstray = ${cstray_pF.toFixed(2)} pF</td>
+                    <td>Lưu giá trị Cstray vào bộ nhớ Non-Volatile Flash (NVS) để tự động trừ sạch trong mọi phép đo.</td>
+                </tr>
+            `;
+
+            desc.innerHTML = `
+                • <strong>Mục đích:</strong> Đo điện dung ký sinh tĩnh của toàn bộ đường mạch in PCB 2 lớp và đầu kẹp SMA (Cstray).<br>
+                • <strong>Nguyên lý:</strong> Khi để hở 2 cọc đo (OPEN), firmware dùng một cuộn cảm mẫu chuẩn xác định tần số dao động f_open, từ đó giải ra chính xác <code>Cstray = ${cstray_pF.toFixed(2)} pF</code>. Nhờ bước này, máy đo đạt độ chính xác tới 0.1 pF!
+            `;
+        } else if (scen === 'SHORT') {
+            badge.innerText = 'KỊCH BẢN 5: HIỆU CHUẨN SHORT (ĐO Llead)';
+            badge.className = 'status-pill pill-active';
+            cardCtrl.innerText = 'RELAY1_CTRL: 0.0V (LOW)';
+            cardTank.innerText = 'CHẬP TẮT GÁ ĐO (SHORT 0Ω)';
+            cardPulse.innerText = 'Llead = 7.40 nH | Đã lưu Flash';
+            currentF = 0;
+            isRelayEnergized = false;
+
+            rows = `
+                <tr>
+                    <td><strong>J1 (SMA)</strong></td>
+                    <td>Cổng kẹp đo</td>
+                    <td><span class="status-pill pill-alert">CHẬP TẮT (SHORT)</span></td>
+                    <td>R_chập = 0 Ω | Cắm thanh đồng ngắn 0Ω</td>
+                    <td>Triệt tiêu toàn bộ điện cảm Lx của linh kiện, chỉ còn sót lại điện cảm vòng dây gá đo Llead.</td>
+                </tr>
+                <tr>
+                    <td><strong>Firmware</strong></td>
+                    <td>Thuật toán ESP32-S3</td>
+                    <td><span class="status-pill pill-active">BÙ ĐIỆN CẢM DÂY</span></td>
+                    <td>Llead ≈ 7.4 nH (sai số 0.07% trên cuộn 10µH)</td>
+                    <td>Lưu vào Flash để trừ bớt giá trị Llead khi đo các cuộn cảm nhỏ cấp µH.</td>
+                </tr>
+            `;
+
+            desc.innerHTML = `
+                • <strong>Mục đích:</strong> Đo độ tự cảm ký sinh nối tiếp của que kẹp và đường mạch dẫn từ tụ chuẩn ra chấu kẹp (Llead).<br>
+                • <strong>Kết quả:</strong> Độ tự cảm ký sinh đo được <code>Llead ≈ 7.4 nH</code> được trừ trực tiếp khỏi kết quả đo Lx, giúp máy đo cuộn cảm 10 µH không bị lệch trị số.
+            `;
+        } else if (scen === 'IDLE') {
+            badge.innerText = 'KỊCH BẢN 6: CHẾ ĐỘ NGHỈ (STANDBY)';
+            badge.className = 'status-pill pill-off';
+            cardCtrl.innerText = 'RELAY1_CTRL: 0.0V (LOW)';
+            cardTank.innerText = 'TẠM DỪNG DAO ĐỘNG';
+            cardPulse.innerText = 'PCNT PAUSED | Dòng nghỉ: 26.4 mA';
+            currentF = 0;
+            isRelayEnergized = false;
+
+            rows = `
+                <tr>
+                    <td><strong>Toàn mạch</strong></td>
+                    <td>Hệ thống LCR Meter</td>
+                    <td><span class="status-pill pill-off">CHỜ ĐO TIẾT KIỆM PIN</span></td>
+                    <td>Dòng tiêu thụ I_idle = 26.4 mA (công suất ~98 mW)</td>
+                    <td>Relay nhả hoàn toàn (0mA), MCU tạm dừng bộ đếm xung, màn hình OLED hiển thị thông báo chờ.</td>
+                </tr>
+            `;
+
+            desc.innerHTML = `
+                • <strong>Trạng thái tiết kiệm điện:</strong> Rơ-le nhả hoàn toàn, không tốn 33 mA dòng cuộn hút. Bộ đếm xung PCNT và MCPWM Capture tạm ngưng. Vi điều khiển chỉ chạy vòng lặp quét phím nhấn MEASURE để sẵn sàng kích hoạt đo khi người dùng yêu cầu.
+            `;
+        }
+
+        tbody.innerHTML = rows;
+        updateOscilloscope(currentF, isRelayEnergized);
+    }
+
+    function updateOscilloscope(f, isRelayOn) {
+        const points = 200;
+        const timeLabels = [];
+        const ch1_tank = [];
+        const ch2_vbias = [];
+        const ch3_pulse = [];
+        const ch4_ctrl = [];
+
+        const cycles = 3.5;
+        const T = (f > 0) ? (1.0 / f) : 1e-6;
+        const dt = (cycles * T) / points;
+
+        for (let i = 0; i <= points; i++) {
+            const t = i * dt;
+            timeLabels.push((t * 1e9).toFixed(1)); // ns
+
+            if (f > 0) {
+                // CH1: Sine on 1.65V bias
+                const v_amp = isRelayOn ? 0.28 : 0.32; // Volts
+                const v_tank = 1.65 + v_amp * Math.sin(2 * Math.PI * f * t);
+                ch1_tank.push(v_tank);
+
+                // CH2: Flat V_BIAS DC = 1.65V
+                ch2_vbias.push(1.65);
+
+                // CH3: Square wave 0 - 3.3V (with slight phase delay tpd)
+                const phase_t = t - TPD;
+                const sq = (Math.sin(2 * Math.PI * f * phase_t) >= 0) ? 3.3 : 0.0;
+                ch3_pulse.push(sq);
+            } else {
+                ch1_tank.push(1.65);
+                ch2_vbias.push(1.65);
+                ch3_pulse.push(0);
+            }
+
+            // CH4: Relay Ctrl
+            ch4_ctrl.push(isRelayOn ? 3.3 : 0.0);
+        }
+
+        if (!scopeChart) {
+            const ctx = document.getElementById('scopeCanvas').getContext('2d');
+            scopeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [
+                        {
+                            label: 'CH1: Sóng tại LC_TANK / IN+ (V)',
+                            data: ch1_tank,
+                            borderColor: '#38bdf8',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'CH2: Ngưỡng so sánh IN- (V_BIAS = 1.65V)',
+                            data: ch2_vbias,
+                            borderColor: '#c084fc',
+                            borderDash: [4, 4],
+                            borderWidth: 1.5,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'CH3: Ngõ ra /LC_PULSE (Xung vuông 3.3V)',
+                            data: ch3_pulse,
+                            borderColor: '#34d399',
+                            borderWidth: 2,
+                            stepped: true,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'CH4: Điều khiển Relay (/RELAY1_CTRL)',
+                            data: ch4_ctrl,
+                            borderColor: '#fbbf24',
+                            borderWidth: 1.5,
+                            borderDash: [6, 3],
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f8fafc', font: { size: 11 } }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#64748b', maxTicksLimit: 10 },
+                            title: { display: true, text: 'Thời gian t (nanogiây - ns)', color: '#64748b' }
+                        },
+                        y: {
+                            min: -0.3,
+                            max: 3.8,
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#94a3b8', stepSize: 0.5 },
+                            title: { display: true, text: 'Điện áp (V)', color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        } else {
+            scopeChart.data.labels = timeLabels;
+            scopeChart.data.datasets[0].data = ch1_tank;
+            scopeChart.data.datasets[1].data = ch2_vbias;
+            scopeChart.data.datasets[2].data = ch3_pulse;
+            scopeChart.data.datasets[3].data = ch4_ctrl;
+            scopeChart.update();
+        }
+    }
+
+    // Initialize on load
+    window.onload = function() {
+        setScenario('P1');
+    };
+</script>
+
+</body>
+</html>

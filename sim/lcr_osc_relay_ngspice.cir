@@ -1,0 +1,66 @@
+* =====================================================================
+*  LCR/EPC Meter - Proof of Concept (ngspice / KiCad simulator)
+*  Block 1: LC oscillator (TLV3601 behavioural, Option B topology)
+*  Block 2: relay calibration (two-capacitor resonance method)
+*  Run:  ngspice -b lcr_osc_relay_ngspice.cir
+* =====================================================================
+* ---- DUT parameters (edit to test other inductors) ----
+* Lx  : real inductance (10u .. 100m)
+* Rs  : AC winding resistance (Q ~ 30..50)
+* Cp  : EPC (parasitic parallel capacitance)
+.param Lx=10u
+.param Rs=16
+.param Cp=5p
+
+* ---- reference capacitors ----
+* C0 : fixed reference cap
+* Cs : switched reference cap (relay)
+* Cstray : fixture stray capacitance
+.param C0=33p
+.param Cs=100p
+.param Cstray=5p
+
+* ---- supply / bias ----
+Vdd   vdd   0   3.3
+Vbias vbias 0   1.65
+Cdec  vbias 0   100n
+
+* ---- comparator TLV3601 (behavioural, rail-to-rail push-pull) ----
+* IN+ = tank node ; IN- = vbias ; 2000 = gain
+Bcmp  out   0   V = { 0.5*V(vdd)*(1 + tanh(2000*(V(tank)-V(vbias))) ) }
+
+* ---- resonant tank ----
+C18   tank  0   {C0}
+Cst   tank  0   {Cstray}
+L1    tank  n1  {Lx}
+R1    n1    vbias {Rs}
+C1    tank  vbias {Cp}
+
+* ---- drive + DC bias hold ----
+R12   out   tank  100k
+R14   vbias tank  100k
+
+* ---- relay calibration: switches Cs in/out ----
+Vctrl ctrl 0 0
+Srel  tank mid ctrl 0 RSW
+C12   mid  0   {Cs}
+Rleak mid  0   1G
+.model RSW SW(Ron=0.05 Roff=1e9 Vt=1.65 Vh=0.2)
+
+* ---- control: state A then state B ----
+.control
+* -------- STATE A : relay OPEN (only C0) --------
+tran 1n 800u
+meas tran tA1 when v(out)=1.65 rise=50
+meas tran tA2 when v(out)=1.65 rise=250
+let f1 = 200/(ta2-ta1)
+print f1
+* -------- STATE B : relay CLOSED (C0 + Cs) --------
+alter Vctrl 3.3
+tran 1n 800u
+meas tran tB1 when v(out)=1.65 rise=50
+meas tran tB2 when v(out)=1.65 rise=250
+let f2 = 200/(tb2-tb1)
+print f2
+.endc
+.end

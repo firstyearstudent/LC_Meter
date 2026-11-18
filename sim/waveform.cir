@@ -1,0 +1,34 @@
+* LCR/EPC Meter - waveform capture for both relay states
+.param Lx=10u
+.param Rs=16
+.param Cp=5p
+.param C0=33p
+.param Cs=100p
+.param Cstray=5p
+Vdd vdd 0 3.3
+Vbias vbias 0 1.65
+Cdec vbias 0 100n
+Bcmp out 0 V={0.5*V(vdd)*(1+tanh(2000*(V(tank)-V(vbias))))}
+C18 tank 0 {C0}
+Cst tank 0 {Cstray}
+L1 tank n1 {Lx}
+R1 n1 vbias {Rs}
+C1 tank vbias {Cp}
+R12 out tank 100k
+R14 vbias tank 100k
+Vctrl ctrl 0 0
+Srel tank mid ctrl 0 RSW
+C12 mid 0 {Cs}
+Rleak mid 0 1G
+.model RSW SW(Ron=0.05 Roff=1e9 Vt=1.65 Vh=0.2)
+.control
+* STATE A
+tran 1n 5u
+set wr_singlescale
+wrdata waveA.txt v(tank) v(out)
+* STATE B
+alter Vctrl 3.3
+tran 1n 5u
+wrdata waveB.txt v(tank) v(out)
+.endc
+.end

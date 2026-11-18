@@ -1,0 +1,54 @@
+* =====================================================================
+*  LCR/EPC Meter - Proof of Concept (LTspice)
+*  Block 1: LC oscillator (TLV3601 behavioural, Option B)
+*  Block 2: relay calibration (two-capacitor resonance)
+*  Run: File -> Open -> this file -> Run ; see Ctrl+L (error log) for f
+*  .step param RELAY 0 1 1  -> 2 runs: RELAY=0 (open) and RELAY=1 (closed)
+* =====================================================================
+* ---- DUT parameters ----
+.param Lx=10u
+.param Rs=16
+.param Cp=5p
+* ---- reference capacitors ----
+.param C0=33p
+.param Cs=100p
+.param Cstray=5p
+* ---- relay state (stepped 0 then 1) ----
+.param RELAY=0
+
+* ---- supply / bias ----
+Vdd   vdd   0   3.3
+Vbias vbias 0   1.65
+Cdec  vbias 0   100n
+
+* ---- comparator TLV3601 (behavioural, rail-to-rail) ----
+Bcmp  out   0   V=0.5*V(vdd)*(1+tanh(2000*(V(tank)-V(vbias))))
+
+* ---- resonant tank ----
+C18   tank  0   {C0}
+Cst   tank  0   {Cstray}
+L1    tank  n1  {Lx}
+R1    n1    vbias {Rs}
+C1    tank  vbias {Cp}
+
+* ---- drive + DC bias hold ----
+R12   out   tank  100k
+R14   vbias tank  100k
+
+* ---- relay: switches Cs in/out ----
+Vctrl ctrl 0 {RELAY*3.3}
+Srel  tank mid ctrl 0 RSW
+C12   mid  0   {Cs}
+Rleak mid  0   1G
+.model RSW SW(Ron=0.05 Roff=1e9 Vt=1.65 Vh=0.2)
+
+* ---- transient ----
+.tran 0 800u 0 1n
+.step param RELAY 0 1 1
+
+* ---- measure frequency (200 periods) ----
+.meas tran t1 when V(out)=1.65 rise=50
+.meas tran t2 when V(out)=1.65 rise=250
+.meas tran f  param 200/(t2-t1)
+.backanno
+.end
